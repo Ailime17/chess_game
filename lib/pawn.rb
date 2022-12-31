@@ -1,5 +1,3 @@
-require_relative 'players'
-
 # class for the pawn pieces
 class PawnMoves
   def initialize
@@ -41,13 +39,6 @@ class PawnMoves
   end
 
   def path_empty?(start_square, player)
-    # path_is_empty = true
-    # square = start_square
-    # until square == end_square
-    #   square[1] += 1
-    #   return false unless square_empty?(square)
-    # end
-    # path_is_empty
     if player.color == 'white'
       square = [start_square[0], start_square[1] + 1]
       square_empty?(square)
