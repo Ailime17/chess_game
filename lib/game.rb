@@ -2,8 +2,9 @@ require_relative 'board'
 require_relative 'players'
 require_relative 'knight'
 require_relative 'pawn'
+require_relative 'rook'
 
-# class for the command line game
+# class for the command line chess game
 class ChessGame
   def initialize
     @board = Board.new.board
@@ -12,6 +13,7 @@ class ChessGame
     @player2 = PlayerTwo.new
     @knight = KnightMoves.new
     @pawn = PawnMoves.new
+    @rook = RookMoves.new
   end
 
   def introduction
@@ -81,9 +83,8 @@ class ChessGame
     unicode_piece = @board[square]
     # when ("\u2655", "\u265B") then @queen
     # when ("\u2654", "\u265A") then @king
-    # when ("\u2656", "\u265C") then @rook
     # when ("\u2657", "\u265D") then @bishop
-    pieces = [@knight, @pawn, @queen, @king, @rook, @bishop]
+    pieces = [@knight, @pawn, @rook, @bishop, @queen, @king]
     pieces.each do |piece| # change to select once all symbols have classes
       return piece if piece.equals_unicode_piece?(unicode_piece)
     end
@@ -93,9 +94,13 @@ class ChessGame
     start_square = [next_move[0], next_move[1].to_i] # e.g. = ['a', 2]
     end_square = [next_move[2], next_move[3].to_i]
     unicode_piece = @board[start_square]
-    update_opponents_pieces(end_square, player) unless square_empty?(end_square)
+    update_opponents_pieces(end_square, player) if makes_a_capture?(end_square)
     update_board(start_square, end_square, unicode_piece)
     update_board_for_display(next_move, unicode_piece)
+  end
+
+  def makes_a_capture?(end_square)
+    !square_empty?(end_square)
   end
 
   def update_board(start_square, end_square, unicode_piece)
@@ -137,6 +142,9 @@ player2 = chess.instance_variable_get(:@player2)
 chess.get_next_move(player1)
 chess.get_next_move(player2)
 chess.get_next_move(player1)
+chess.get_next_move(player2)
+chess.get_next_move(player1)
+chess.get_next_move(player2)
 # p player2.player_pieces
 # p chess.instance_variable_get(:@board)
 
