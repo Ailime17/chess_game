@@ -3,6 +3,7 @@ require_relative 'players'
 require_relative 'knight'
 require_relative 'pawn'
 require_relative 'rook'
+require_relative 'bishop'
 
 # class for the command line chess game
 class ChessGame
@@ -14,6 +15,7 @@ class ChessGame
     @knight = KnightMoves.new
     @pawn = PawnMoves.new
     @rook = RookMoves.new
+    @bishop = BishopMoves.new
   end
 
   def introduction
@@ -83,7 +85,6 @@ class ChessGame
     unicode_piece = @board[square]
     # when ("\u2655", "\u265B") then @queen
     # when ("\u2654", "\u265A") then @king
-    # when ("\u2657", "\u265D") then @bishop
     pieces = [@knight, @pawn, @rook, @bishop, @queen, @king]
     pieces.each do |piece| # change to select once all symbols have classes
       return piece if piece.equals_unicode_piece?(unicode_piece)
