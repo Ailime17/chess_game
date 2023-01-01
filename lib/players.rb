@@ -1,6 +1,7 @@
 # class for white pieces
 class PlayerOne
-  attr_reader :queen, :king, :rook, :knight, :bishop, :pawn, :player_pieces, :color
+  attr_reader :queen, :king, :rook, :knight, :bishop, :pawn, :color
+  attr_accessor :player_pieces, :king_moved
 
   def initialize
     @color = 'white'
@@ -11,12 +12,14 @@ class PlayerOne
     @bishop = "\u2657"
     @pawn = "\u2659"
     @player_pieces = { @queen => 1, @king => 1, @rook => 2, @knight => 2, @bishop => 2, @pawn => 8 }
+    @king_moved = false
   end
 end
 
 # class for black pieces
 class PlayerTwo
-  attr_reader :queen, :king, :rook, :knight, :bishop, :pawn, :player_pieces, :color
+  attr_reader :queen, :king, :rook, :knight, :bishop, :pawn, :color
+  attr_accessor :player_pieces, :king_moved
 
   def initialize
     @color = 'black'
@@ -27,6 +30,7 @@ class PlayerTwo
     @bishop = "\u265D"
     @pawn = "\u265F"
     @player_pieces = { @queen => 1, @king => 1, @rook => 2, @knight => 2, @bishop => 2, @pawn => 8 }
+    @king_moved = false
   end
 end
 
