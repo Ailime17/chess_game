@@ -2,13 +2,15 @@ require_relative 'players'
 
 # class that sets up the board
 class Board
-  attr_reader :board, :board_for_display
+  attr_reader :board, :board_for_display, :white_squares, :black_squares
 
   def initialize
     @white = PlayerOne.new
     @black = PlayerTwo.new
     @board = make_board
     @board_for_display = make_board_for_display
+    @white_squares = read_squares('white')
+    @black_squares = read_squares('black')
   end
 
   # files are columns & ranks are rows on the board
@@ -93,5 +95,18 @@ class Board
      ['wp',@white.pawn], ['bp',@black.pawn], ['wb',@white.bishop], ['bb',@black.bishop]].each do |pair|
       board.gsub!(pair[0], "#{pair[1]} ")
     end
+  end
+
+  def read_squares(color_of_squares)
+    squares = []
+    colors = ['white', 'black'].cycle
+    ('a'..'h').each do |file|
+      square_color = colors.next
+      (1..8).each do |rank|
+        square_color = colors.next
+        squares << [file, rank] if color_of_squares == square_color
+      end
+    end
+    squares
   end
 end
