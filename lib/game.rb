@@ -3,6 +3,7 @@ require_relative 'players'
 require_relative 'knight'
 require_relative 'pawn'
 require_relative 'queen'
+require_relative 'king'
 
 # class for the command line chess game
 class ChessGame
@@ -16,6 +17,7 @@ class ChessGame
     @rook = RookMoves.new
     @bishop = BishopMoves.new
     @queen = QueenMoves.new
+    @king = KingMoves.new
   end
 
   def introduction
@@ -42,6 +44,17 @@ class ChessGame
     end
   end
 
+  # def draw?
+  #   insufficient_material_draw?    
+  # end
+
+  # def insufficient_material_draw?
+  #   # @player1.player_pieces == { @queen => 0, @king => 1, @rook => 0, @knight => 0, @bishop => 1, @pawn => 0 } && @player2.player_pieces == { @queen => 0, @king => 1, @rook => 0, @knight => 0, @bishop => 1, @pawn => 0 }
+  #   @player1.player_pieces.each do |piece, amount_left|
+      
+  #   end
+  # end
+
   def get_next_move(player)
     puts 'Make your next move'
     next_move = gets.strip.downcase
@@ -63,8 +76,14 @@ class ChessGame
       !square_empty?(start_square) &&
       !piece_belongs_to_player?(end_square, player) &&
       piece_belongs_to_player?(start_square, player) &&
-      legal_move?(start_square, end_square, player)
+      # (
+      legal_move?(start_square, end_square, player) 
+      # || castling_move?(start_square, end_square, player))
   end
+
+  # def castling_move?(start_square, end_square, player)
+  #   true if player.king_moved == false && a method to check if that particular rook moved && the king wants to move 2 squares to that rook
+  # end
 
   def square_empty?(square)
     @board[square].empty?
@@ -83,7 +102,6 @@ class ChessGame
 
   def read_piece_name(square)
     unicode_piece = @board[square]
-    # when ("\u2654", "\u265A") then @king
     pieces = [@knight, @pawn, @rook, @bishop, @queen, @king]
     pieces.each do |piece| # change to select once all symbols have classes
       return piece if piece.equals_unicode_piece?(unicode_piece)
@@ -94,9 +112,24 @@ class ChessGame
     start_square = [next_move[0], next_move[1].to_i] # e.g. = ['a', 2]
     end_square = [next_move[2], next_move[3].to_i]
     unicode_piece = @board[start_square]
+    remember_moved_king(player) if unicode_piece == @king
+    remember_moved_rook(start_square, player) if unicode_piece == @rook
     update_opponents_pieces(end_square, player) if makes_a_capture?(end_square)
     update_board(start_square, end_square, unicode_piece)
     update_board_for_display(next_move, unicode_piece)
+  end
+
+  def remember_moved_king(player)
+    player.king_moved = true
+  end
+
+  def remember_moved_rook(start_square, player)
+    file = start_square[0]
+    if file == 'a'
+      player.rook_a_moved = true
+    elsif file == 'h'
+      player.rook_h_moved = true
+    end
   end
 
   def makes_a_capture?(end_square)
