@@ -31,7 +31,10 @@ class ChessGame
   def play_game
     player = 1
     loop do
-      # break if winner? || draw? || @game_ended
+      # if winner? || draw? || @game_ended
+      #   end_message
+      #   break
+      # end
 
       case player
       when 1
@@ -44,16 +47,22 @@ class ChessGame
     end
   end
 
-  # def draw?
-  #   insufficient_material_draw?    
-  # end
+  def draw?
+    insufficient_material_draw?
+  end
 
-  # def insufficient_material_draw?
-  #   # @player1.player_pieces == { @queen => 0, @king => 1, @rook => 0, @knight => 0, @bishop => 1, @pawn => 0 } && @player2.player_pieces == { @queen => 0, @king => 1, @rook => 0, @knight => 0, @bishop => 1, @pawn => 0 }
-  #   @player1.player_pieces.each do |piece, amount_left|
-      
-  #   end
-  # end
+  def insufficient_material_draw?
+    insufficient_white_pieces = insufficient_player_pieces?(@player1)
+    insufficient_black_pieces =  insufficient_player_pieces?(@player2)
+    insufficient_white_pieces && insufficient_black_pieces
+  end
+
+  def insufficient_player_pieces?(player)
+    case player.player_pieces
+    when player.lone_king, player.king_and_knight, player.king_and_bishop then true
+    else false
+    end
+  end
 
   def get_next_move(player)
     puts 'Make your next move'
@@ -82,7 +91,14 @@ class ChessGame
   end
 
   # def castling_move?(start_square, end_square, player)
-  #   true if player.king_moved == false && a method to check if that particular rook moved && the king wants to move 2 squares to that rook
+  #   true if player.king_moved == false && king_moves_2_places_horizontally?(start_square, end_square) && a method to check if that particular rook moved && the path between is empty?
+  # end
+
+  # def king_moves_2_places_horizontally?(start_square, end_square)
+  #  case end_square
+  #  when [(start_square[0].ord + 2).chr, end_square[1]], [(start_square[0].ord - 2).chr, end_square[1]] then true
+  #  else false
+  #  end
   # end
 
   def square_empty?(square)
@@ -103,9 +119,7 @@ class ChessGame
   def read_piece_name(square)
     unicode_piece = @board[square]
     pieces = [@knight, @pawn, @rook, @bishop, @queen, @king]
-    pieces.each do |piece| # change to select once all symbols have classes
-      return piece if piece.equals_unicode_piece?(unicode_piece)
-    end
+    pieces.each { |piece| return piece if piece.equals_unicode_piece?(unicode_piece) }
   end
 
   def make_move(next_move, player)
@@ -125,10 +139,9 @@ class ChessGame
 
   def remember_moved_rook(start_square, player)
     file = start_square[0]
-    if file == 'a'
-      player.rook_a_moved = true
-    elsif file == 'h'
-      player.rook_h_moved = true
+    case file
+    when 'a' then player.rook_a_moved = true
+    when 'h' then player.rook_h_moved = true
     end
   end
 
@@ -171,18 +184,18 @@ p chess.instance_variable_get(:@board)
 puts chess.instance_variable_get(:@board_for_display)
 
 player1 = chess.instance_variable_get(:@player1)
-player2 = chess.instance_variable_get(:@player2)
-chess.get_next_move(player1)
-chess.get_next_move(player2)
-chess.get_next_move(player1)
-chess.get_next_move(player2)
-chess.get_next_move(player1)
-chess.get_next_move(player2)
+# player2 = chess.instance_variable_get(:@player2)
+# chess.get_next_move(player1)
+# chess.get_next_move(player2)
+# chess.get_next_move(player1)
+# chess.get_next_move(player2)
+# chess.get_next_move(player1)
+# chess.get_next_move(player2)
 # p player2.player_pieces
 # p chess.instance_variable_get(:@board)
 
 # puts chess.instance_variable_get(:@board_for_display)
 
-# # p chess.legal_move?(['a', 2], ['a', 4], player1)
+p chess.legal_move?(['a', 2], ['a', 4], player1)
 
 # # p chess.read_piece_name(['b',1])
