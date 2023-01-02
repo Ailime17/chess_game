@@ -16,6 +16,18 @@ class PlayerOne
     @rook_a_moved = false
     @rook_h_moved = false
   end
+
+  def lone_king
+    { @queen => 0, @king => 1, @rook => 0, @knight => 0, @bishop => 0, @pawn => 0 }
+  end
+
+  def king_and_knight
+    { @queen => 0, @king => 1, @rook => 0, @knight => 1, @bishop => 0, @pawn => 0 }
+  end
+
+  def king_and_bishop
+    { @queen => 0, @king => 1, @rook => 0, @knight => 0, @bishop => 1, @pawn => 0 }
+  end
 end
 
 # class for black pieces
@@ -35,6 +47,18 @@ class PlayerTwo
     @king_moved = false
     @rook_a_moved = false
     @rook_h_moved = false
+  end
+
+  def lone_king
+    { @queen => 0, @king => 1, @rook => 0, @knight => 0, @bishop => 0, @pawn => 0 }
+  end
+
+  def king_and_knight
+    { @queen => 0, @king => 1, @rook => 0, @knight => 1, @bishop => 0, @pawn => 0 }
+  end
+
+  def king_and_bishop
+    { @queen => 0, @king => 1, @rook => 0, @knight => 0, @bishop => 1, @pawn => 0 }
   end
 end
 
