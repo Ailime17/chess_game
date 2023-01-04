@@ -85,21 +85,51 @@ class ChessGame
       !square_empty?(start_square) &&
       !piece_belongs_to_player?(end_square, player) &&
       piece_belongs_to_player?(start_square, player) &&
-      # (
-      legal_move?(start_square, end_square, player) 
-      # || castling_move?(start_square, end_square, player))
+      legal_move?(start_square, end_square, player)
   end
 
-  # def castling_move?(start_square, end_square, player)
-  #   true if player.king_moved == false && king_moves_2_places_horizontally?(start_square, end_square) && a method to check if that particular rook moved && the path between is empty?
-  # end
+  def castling_move?(start_square, end_square, player, piece = read_piece_name(start_square))
+    piece == @king &&
+      player.king_moved == false &&
+      king_moves_2_places_horizontally?(start_square, end_square) &&
+      rook_has_not_moved?(start_square, end_square, player) && path_between_king_and_rook_empty?(start_square, end_square, player)
+  end
 
-  # def king_moves_2_places_horizontally?(start_square, end_square)
-  #  case end_square
-  #  when [(start_square[0].ord + 2).chr, end_square[1]], [(start_square[0].ord - 2).chr, end_square[1]] then true
-  #  else false
-  #  end
-  # end
+  def king_moves_2_places_horizontally?(start_square, end_square)
+    case end_square
+    when [(start_square[0].ord + 2).chr, start_square[1]], [(start_square[0].ord - 2).chr, start_square[1]] then true
+    else false
+    end
+  end
+
+  def rook_has_not_moved?(start_square, end_square, player)
+    if king_moved_towards_rook_h?(start_square, end_square)
+      player.rook_h_moved == false
+    else
+      player.rook_a_moved == false
+    end
+  end
+
+  def path_between_king_and_rook_empty?(start_square, end_square, player)
+    a_rook = (player == @player1 ? ['a', 1] : ['a', 8])
+    h_rook = (player == @player1 ? ['h', 1] : ['h', 8])
+    if king_moved_towards_rook_h?(start_square, end_square)
+      king_to_rook_path_empty?(start_square, h_rook, :+)
+    else
+      king_to_rook_path_empty?(start_square, a_rook, :-)
+    end
+  end
+
+  def king_to_rook_path_empty?(start_square, end_square, add_or_substract)
+    square = [start_square[0], start_square[1]]
+    square[0] = square[0].ord.public_send(add_or_substract, 1).chr
+    until square == end_square
+      return false unless square_empty?(square)
+
+      square[0] = square[0].ord.public_send(add_or_substract, 1).chr
+    end
+    true
+  end
 
   def square_empty?(square)
     @board[square].empty?
@@ -113,7 +143,9 @@ class ChessGame
 
   def legal_move?(start_square, end_square, player)
     piece = read_piece_name(start_square)
-    piece.allowed_moves(start_square, end_square, player, @board).include?(end_square)
+    piece.allowed_moves(start_square, end_square, player, @board).include?(end_square) ||
+      castling_move?(start_square, end_square, player, piece)
+      # || en_passant?
   end
 
   def read_piece_name(square)
@@ -122,15 +154,41 @@ class ChessGame
     pieces.each { |piece| return piece if piece.equals_unicode_piece?(unicode_piece) }
   end
 
+  # (the order of methods is very important in make_move)
   def make_move(next_move, player)
     start_square = [next_move[0], next_move[1].to_i] # e.g. = ['a', 2]
     end_square = [next_move[2], next_move[3].to_i]
     unicode_piece = @board[start_square]
-    remember_moved_king(player) if unicode_piece == @king
-    remember_moved_rook(start_square, player) if unicode_piece == @rook
+    return perform_castling(start_square, end_square, player) if castling_move?(start_square, end_square, player)
+
+    remember_moved_king(player) if @king.equals_unicode_piece?(unicode_piece)
+    remember_moved_rook(start_square, player) if @rook.equals_unicode_piece?(unicode_piece)
     update_opponents_pieces(end_square, player) if makes_a_capture?(end_square)
+    update_both_boards(start_square, end_square, unicode_piece)
+  end
+
+  def perform_castling(start_square, end_square, player)
+    a_rook = (player == @player1 ? ['a', 1] : ['a', 8])
+    h_rook = (player == @player1 ? ['h', 1] : ['h', 8])
+    king_square = start_square
+    king_piece = @board[king_square]
+    if king_moved_towards_rook_h?(start_square, end_square)
+      rook_square = h_rook
+      square_next_to_king = [(king_square[0].ord + 1).chr, king_square[1]]
+    else
+      rook_square = a_rook
+      square_next_to_king = [(king_square[0].ord - 1).chr, king_square[1]]
+    end
+    rook_piece = @board[rook_square]
+    update_both_boards(king_square, end_square, king_piece) # with king
+    update_both_boards(rook_square, square_next_to_king, rook_piece) # with rook
+    remember_moved_rook(rook_square, player)
+    remember_moved_king(player)
+  end
+
+  def update_both_boards(start_square, end_square, unicode_piece)
     update_board(start_square, end_square, unicode_piece)
-    update_board_for_display(next_move, unicode_piece)
+    update_board_for_display(start_square, end_square, unicode_piece)
   end
 
   def remember_moved_king(player)
@@ -149,6 +207,10 @@ class ChessGame
     !square_empty?(end_square)
   end
 
+  def king_moved_towards_rook_h?(start_square, end_square)
+    end_square[0] > start_square[0]
+  end
+
   def update_board(start_square, end_square, unicode_piece)
     @board[end_square] = unicode_piece
     @board[start_square] = ''
@@ -160,11 +222,11 @@ class ChessGame
     opponent.player_pieces[unicode_piece] -= 1
   end
 
-  def update_board_for_display(next_move, unicode_piece)
-    start_rank = next_move[1]
-    start_file = next_move[0]
-    end_rank = next_move[3]
-    end_file = next_move[2]
+  def update_board_for_display(start_square, end_square, unicode_piece)
+    start_rank = start_square[1].to_s
+    start_file = start_square[0]
+    end_rank = end_square[1].to_s
+    end_file = end_square[0]
     # place the piece on the new square:
     @board_for_display[@board_for_display.index(end_rank) + get_file_index(end_file)] = unicode_piece
     # empty the square where the piece was:
@@ -185,17 +247,26 @@ puts chess.instance_variable_get(:@board_for_display)
 
 player1 = chess.instance_variable_get(:@player1)
 # player2 = chess.instance_variable_get(:@player2)
-# chess.get_next_move(player1)
+chess.make_move('g2g4', player1)
+# chess.get_next_move(player2)
+chess.make_move('f1g2', player1)
+# chess.get_next_move(player2)
+chess.make_move('g1f3', player1)
+# chess.get_next_move(player2)
+chess.make_move('e1f1', player1)
+chess.make_move('f1g1', player1)
 # chess.get_next_move(player2)
 # chess.get_next_move(player1)
-# chess.get_next_move(player2)
-# chess.get_next_move(player1)
+# p chess.castling_move?(['e', 1], ['g', 1], player1)
 # chess.get_next_move(player2)
 # p player2.player_pieces
 # p chess.instance_variable_get(:@board)
 
 # puts chess.instance_variable_get(:@board_for_display)
 
-p chess.legal_move?(['a', 2], ['a', 4], player1)
+# p chess.legal_move?(['a', 2], ['a', 4], player1)
 
 # # p chess.read_piece_name(['b',1])
+# chess.complete_castling(['e', 1], ['c', 1], player1)
+p chess.instance_variable_get(:@board)
+puts chess.instance_variable_get(:@board_for_display)
