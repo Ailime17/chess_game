@@ -14,7 +14,7 @@ class KingMoves
     file = start_square[0]
     rank = start_square[1]
     allowed_moves = [] + diagonal_moves(file, rank) + horizontal_moves(file, rank) + vertical_moves(file, rank)
-    allowed_moves.select! { @board.include?(allowed_move) }
+    allowed_moves.select! { |allowed_move| @board.include?(allowed_move) }
     allowed_moves
   end
 
