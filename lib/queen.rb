@@ -13,8 +13,7 @@ class QueenMoves
   end
 
   def allowed_moves(start_square, end_square, player, board)
-    @board = board
-    # lazy version, because allowed_moves doesn't include all possible end_squares, only the one end_square if legal
+    # preserving memory space version, because allowed_moves doesn't include all possible end_squares, only the one end_square if legal
     RookMoves.new.allowed_moves(start_square, end_square, player, board) + BishopMoves.new.allowed_moves(start_square, end_square, player, board)
   end
 end

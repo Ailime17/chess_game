@@ -11,7 +11,7 @@ class RookMoves
 
   def allowed_moves(start_square, end_square, _player, board)
     @board = board
-    # lazy version, because allowed_moves doesn't include all possible end_squares, only the one end_square if legal
+    # preserving memory space version, because allowed_moves doesn't include all possible end_squares, only the one end_square if legal
     allowed_moves = []
     allowed_moves << end_square if legal_and_empty_path?(start_square, end_square)
     allowed_moves

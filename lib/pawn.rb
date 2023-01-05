@@ -20,11 +20,12 @@ class PawnMoves
       allowed_moves << one_square_forward(start_square, add_or_substract)
       allowed_moves << two_squares_forward(start_square, add_or_substract) if first_move?(start_square, player) && path_empty?(start_square, player)
     else
-      allowed_moves.concat(one_square_diagonally_forward(start_square, add_or_substract))
+      allowed_moves += one_square_diagonally_forward_left_and_right(start_square, add_or_substract)
     end
     allowed_moves.select! { |move| @board.key?(move) }
     allowed_moves
   end
+
 
   def one_square_forward(start_square, add_or_substract)
     [start_square[0], start_square[1].public_send(add_or_substract, 1)]
@@ -34,8 +35,9 @@ class PawnMoves
     [start_square[0], start_square[1].public_send(add_or_substract, 2)]
   end
 
-  def one_square_diagonally_forward(start_square, add_or_substract)
-    [[(start_square[0].ord - 1).chr, start_square[1].public_send(add_or_substract, 1)], [(start_square[0].ord + 1).chr, start_square[1].public_send(add_or_substract, 1)]]
+  def one_square_diagonally_forward_left_and_right(start_square, add_or_substract)
+    [[(start_square[0].ord - 1).chr, start_square[1].public_send(add_or_substract, 1)],
+     [(start_square[0].ord + 1).chr, start_square[1].public_send(add_or_substract, 1)]]
   end
 
   def path_empty?(start_square, player)
@@ -47,12 +49,6 @@ class PawnMoves
       square_empty?(square)
     end
   end
-
-  # def makes_a_capture?(start_square, player)
-  #   if player == @player1
-  #   elsif player == @player2
-  #   end
-  # end
 
   def square_empty?(square)
     @board[square].empty?
