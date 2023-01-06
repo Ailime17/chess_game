@@ -160,7 +160,9 @@ class ChessGame
     start_square = [next_move[0], next_move[1].to_i] # e.g. = ['a', 2]
     end_square = [next_move[2], next_move[3].to_i]
     unicode_piece = @board[start_square]
-    # return no, you have to escape from check if king_is_in_check?
+    # return no, you have to escape from check if !@king.equals_unicode_piece?(unicode_piece) && king_is_in_check?(player)
+
+    # return no, it puts the king in check if @king.equals_unicode_piece?(unicode_piece) &&move_puts_the_king_in_check?(player)
 
     return perform_castling(start_square, end_square, player) if castling_move?(start_square, end_square, player)
 
@@ -168,39 +170,22 @@ class ChessGame
     remember_moved_rook(start_square, player) if @rook.equals_unicode_piece?(unicode_piece)
     update_opponents_pieces(end_square, player) if makes_a_capture?(end_square)
     update_both_boards(start_square, end_square, unicode_piece)
-    # promote_pawn(start_square, end_square, player) if promotion?(end_square, player)
+    promote_pawn(end_square, player) if promotion?(end_square, player)
   end
 
-  # def king_is_in_check?(king_square, player)
-  #   @board.keys.each do |square|
-  #     next if piece_belongs_to_player?(square, player)
+  # def king_is_in_check?(player)
+  #   king_unicode = player.king
+  #   king_square = @board.key(king_unicode)
+  #   opponent = (player == @player1 ? @player2 : @player1)
+
+  #   @board.each_key do |square|
+  #     next if square_empty?(square) || piece_belongs_to_player?(square, player)
 
   #     piece = read_piece_name(square)
-  #     piece.
-  #   end    
+  #     return true if piece.allowed_moves(square, king_square, opponent, @board).include?(king_square)
+  #   end
+  #   false
   # end
-
-  # def promote_pawn(start_square, end_square, player)
-  #   piece = get_promotion_answer
-  #   
-  # end
-
-  def get_promotion_answer
-    answers = %w[queen knight rook bishop]
-    puts %{
-      Choose a piece you want your pawn to be promoted to:
-      Queen / Knight / Rook / Bishop
-    }
-    answer = gets.strip.downcase
-    until answers.include?(answer)
-      puts %{
-        Try again. Choose a piece you want your pawn to be promoted to:
-        Queen / Knight / Rook / Bishop
-      }
-      answer = gets.strip.downcase
-    end
-    answer
-  end
 
   def promotion?(end_square, player)
     unicode_piece = @board[end_square]
@@ -213,13 +198,41 @@ class ChessGame
     (rank == 8 && player == @player1) || (rank == 1 && player == @player2)
   end
 
-  # def king_is_in_check?
-  #   @board.each do |square,piece|
-  #     if piece.allowed_moves.include?(kings square)
-  #       king is in check
-  #     end
-  #   end
-  # end
+  def promote_pawn(end_square, player)
+    piece_to_promote_to = get_promotion_answer
+    new_unicode_piece = case piece_to_promote_to
+                        when 'queen' then player.queen
+                        when 'knight' then player.knight
+                        when 'rook' then player.rook
+                        when 'bishop' then player.bishop
+                        end
+    # update player_pieces:
+    pawn_piece = player.pawn
+    player.player_pieces[pawn_piece] -= 1
+    player.player_pieces[new_unicode_piece] += 1
+    # update both boards:
+    @board[end_square] = new_unicode_piece
+    update_board_for_display(end_square, end_square, new_unicode_piece)
+  end
+
+  def get_promotion_answer
+    answers = %w[queen knight rook bishop]
+    puts %{
+    Good job! Choose a piece you want your pawn to be promoted to:
+    Queen / Knight / Rook / Bishop
+    }
+    print '> '
+    answer = gets.strip.downcase
+    until answers.include?(answer)
+      puts %{
+      Try again. Choose a piece you want your pawn to be promoted to:
+      Queen / Knight / Rook / Bishop
+      }
+      print '> '
+      answer = gets.strip.downcase
+    end
+    answer
+  end
 
   def perform_castling(start_square, end_square, player)
     a_rook = (player == @player1 ? ['a', 1] : ['a', 8])
@@ -281,10 +294,10 @@ class ChessGame
     start_file = start_square[0]
     end_rank = end_square[1].to_s
     end_file = end_square[0]
-    # place the piece on the new square:
-    @board_for_display[@board_for_display.index(end_rank) + get_file_index(end_file)] = unicode_piece
     # empty the square where the piece was:
     @board_for_display[@board_for_display.index(start_rank) + get_file_index(start_file)] = ' '
+    # place the piece on the new square:
+    @board_for_display[@board_for_display.index(end_rank) + get_file_index(end_file)] = unicode_piece
   end
 
   # for @board_for_display:
@@ -302,17 +315,20 @@ puts chess.instance_variable_get(:@board_for_display)
 player1 = chess.instance_variable_get(:@player1)
 player2 = chess.instance_variable_get(:@player2)
 # chess.make_move('g2g4', player1)
-chess.get_next_move(player1)
-# chess.make_move('f1g2', player1)
-chess.get_next_move(player2)
-# chess.make_move('g1f3', player1)
-chess.get_next_move(player1)
-# chess.make_move('e1g1', player1)
-# chess.make_move('f1g1', player1)
+# # chess.make_move('f1g2', player1)
+# # chess.make_move('g1f3', player1)
+# # chess.make_move('e1g1', player1)
+# # chess.make_move('f1g1', player1)
 chess.get_next_move(player2)
 chess.get_next_move(player1)
-# p chess.castling_move?(['e', 1], ['g', 1], player1)
 chess.get_next_move(player2)
+chess.get_next_move(player1)
+chess.get_next_move(player2)
+chess.get_next_move(player1)
+chess.get_next_move(player2)
+chess.get_next_move(player1)
+chess.get_next_move(player2)
+# # p chess.castling_move?(['e', 1], ['g', 1], player1)
 # p player2.player_pieces
 # p chess.instance_variable_get(:@board)
 
@@ -322,5 +338,10 @@ chess.get_next_move(player2)
 
 # # p chess.read_piece_name(['b',1])
 # chess.complete_castling(['e', 1], ['c', 1], player1)
-p chess.instance_variable_get(:@board)
+
+# p chess.king_is_in_check?(player1)
+# p chess.king_is_in_check?(player2)
+# p chess.promote_pawn(['g', 1], player2)
+chess.instance_variable_get(:@board)
+p player2.player_pieces
 puts chess.instance_variable_get(:@board_for_display)
