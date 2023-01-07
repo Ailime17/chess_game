@@ -40,7 +40,7 @@ class RookMoves
                        elsif start_file > end_file
                          :-
                        end
-    square = start_square
+    square = [start_square[0], start_square[1]]
     square[0] = (square[0].ord.public_send(add_or_substract, 1)).chr
     until square == end_square
       return false unless square_empty?(square)
@@ -58,7 +58,7 @@ class RookMoves
                        elsif start_rank > end_rank
                          :-
                        end
-    square = start_square
+    square = [start_square[0], start_square[1]]
     square[1] = square[1].public_send(add_or_substract, 1)
     until square == end_square
       return false unless square_empty?(square)

@@ -24,8 +24,8 @@ class BishopMoves
     end_rank = end_square[1]
     amount_of_places_that_the_rank_grew_or_declined = count_places(start_square, end_square, 'rank')
     amount_of_places_that_the_file_grew_or_declined = count_places(start_square, end_square, 'file')
-    return false if start_file == end_file || start_rank == end_rank || 
-    # to check if it's a diagonal line (= grows proportionally)
+    return false if start_file == end_file || start_rank == end_rank ||
+    # to check if it's a diagonal line (= grows proportionally):
     (amount_of_places_that_the_rank_grew_or_declined != amount_of_places_that_the_file_grew_or_declined)
 
     if start_rank < end_rank
@@ -71,7 +71,7 @@ class BishopMoves
                             when 'up' then :+
                             when 'down' then :-
                             end
-    square = start_square
+    square = [start_square[0], start_square[1]]
     square = [square[0].ord.public_send(add_or_substract_file, 1).chr, square[1].public_send(add_or_substract_rank, 1)]
     until square == end_square
       return false unless square_empty?(square)
