@@ -72,6 +72,7 @@ class ChessGame
       next_move = gets.strip.downcase
     end
     make_move(next_move, player)
+    @most_recent_move = next_move
     puts @board_for_display
   end
 
@@ -90,6 +91,7 @@ class ChessGame
 
   def castling_move?(start_square, end_square, player, piece = read_piece_name(start_square))
     piece == @king &&
+      # !king_is_in_check?(player) &&
       player.king_moved == false &&
       king_moves_2_places_horizontally?(start_square, end_square) &&
       rook_has_not_moved?(start_square, end_square, player) &&
@@ -145,8 +147,8 @@ class ChessGame
   def legal_move?(start_square, end_square, player)
     piece = read_piece_name(start_square)
     piece.allowed_moves(start_square, end_square, player, @board).include?(end_square) ||
-      castling_move?(start_square, end_square, player, piece)
-      # || en_passant?
+      castling_move?(start_square, end_square, player, piece) ||
+      en_passant?(start_square, end_square, player, piece)
   end
 
   def read_piece_name(square)
@@ -163,6 +165,8 @@ class ChessGame
     # return no, you have to escape from check if !@king.equals_unicode_piece?(unicode_piece) && king_is_in_check?(player)
 
     # return no, it puts the king in check if @king.equals_unicode_piece?(unicode_piece) &&move_puts_the_king_in_check?(player)
+
+    return perform_en_passant(start_square, end_square, player, unicode_piece) if en_passant?(start_square, end_square, player)
 
     return perform_castling(start_square, end_square, player) if castling_move?(start_square, end_square, player)
 
@@ -270,6 +274,46 @@ class ChessGame
     end
   end
 
+  def opponent_pawn_just_moved_two_places?
+    start_rank = @most_recent_start_square[1]
+    end_rank = @most_recent_end_square[1]
+
+    read_piece_name(@most_recent_end_square) == @pawn &&
+      (end_rank == start_rank + 2 || end_rank == start_rank - 2)
+  end
+
+  def opponent_pawn_just_sat_next_to_player_pawn?(start_square)
+    (@most_recent_end_square[0] == (start_square[0].ord + 1).chr ||
+      @most_recent_end_square[0] == (start_square[0].ord - 1).chr) &&
+      @most_recent_end_square[1] == start_square[1]
+  end
+
+  def player_pawn_moves_where_the_opponent_pawn_would_be_if_it_moved_one_place?(current_player, end_square)
+    add_or_substract_opponent_rank = (current_player == @player1 ? :- : :+)
+    end_square == [@most_recent_start_square[0], @most_recent_start_square[1].public_send(add_or_substract_opponent_rank, 1)]
+  end
+
+  def en_passant?(start_square, end_square, player, player_piece = read_piece_name(start_square))
+    return false if @most_recent_move.nil?
+
+    @most_recent_start_square = [@most_recent_move[0], @most_recent_move[1].to_i]
+    @most_recent_end_square = [@most_recent_move[2], @most_recent_move[3].to_i]
+
+    player_piece == @pawn &&
+      opponent_pawn_just_moved_two_places? &&
+      opponent_pawn_just_sat_next_to_player_pawn?(start_square) &&
+      player_pawn_moves_where_the_opponent_pawn_would_be_if_it_moved_one_place?(player, end_square)
+  end
+
+  def perform_en_passant(start_square, end_square, player, unicode_piece)
+    update_opponents_pieces(@most_recent_end_square, player)
+    # for the player pawn:
+    update_both_boards(start_square, end_square, unicode_piece)
+    # for the opponent pawn:
+    update_board(@most_recent_end_square, @most_recent_end_square, '')
+    update_board_for_display(@most_recent_end_square, @most_recent_end_square, ' ')
+  end
+
   def makes_a_capture?(end_square)
     !square_empty?(end_square)
   end
@@ -308,26 +352,28 @@ class ChessGame
   end
 end
 chess = ChessGame.new
-# chess.
 p chess.instance_variable_get(:@board)
 puts chess.instance_variable_get(:@board_for_display)
 
 player1 = chess.instance_variable_get(:@player1)
 player2 = chess.instance_variable_get(:@player2)
-# chess.make_move('g2g4', player1)
-# # chess.make_move('f1g2', player1)
-# # chess.make_move('g1f3', player1)
-# # chess.make_move('e1g1', player1)
-# # chess.make_move('f1g1', player1)
-chess.get_next_move(player2)
+# chess.make_move('d2d4', player1)
+# chess.make_move('d4d5', player1)
+# chess.make_move('e7e5', player2)
+# chess.make_move('d5e6', player1)
+
+# chess.make_move('e1g1', player1)
+# chess.make_move('f1g1', player1)
+# chess.get_next_move(player2)
+chess.get_next_move(player1)
+# chess.get_next_move(player2)
 chess.get_next_move(player1)
 chess.get_next_move(player2)
 chess.get_next_move(player1)
-chess.get_next_move(player2)
-chess.get_next_move(player1)
-chess.get_next_move(player2)
-chess.get_next_move(player1)
-chess.get_next_move(player2)
+p chess.instance_variable_get(:@player2).player_pieces
+# chess.get_next_move(player2)
+# chess.get_next_move(player1)
+# chess.get_next_move(player2)
 # # p chess.castling_move?(['e', 1], ['g', 1], player1)
 # p player2.player_pieces
 # p chess.instance_variable_get(:@board)
@@ -343,5 +389,5 @@ chess.get_next_move(player2)
 # p chess.king_is_in_check?(player2)
 # p chess.promote_pawn(['g', 1], player2)
 chess.instance_variable_get(:@board)
-p player2.player_pieces
+# p player2.player_pieces
 puts chess.instance_variable_get(:@board_for_display)
