@@ -29,6 +29,8 @@ class ChessGame
   end
 
   def play_game
+    introduction
+    puts @board_for_display
     player = 1
     loop do
       # if winner? || draw? || @game_ended
@@ -38,10 +40,10 @@ class ChessGame
 
       case player
       when 1
-        get_next_move(player1)
+        player_turn(@player1)
         player = 2
       when 2
-        get_next_move(player2)
+        player_turn(@player2)
         player = 1
       end
     end
@@ -64,16 +66,24 @@ class ChessGame
     end
   end
 
-  def get_next_move(player)
-    puts 'Make your next move'
-    next_move = gets.strip.downcase
-    until valid_move?(next_move, player)
-      puts 'Incorrect choice. Try again'
-      next_move = gets.strip.downcase
-    end
+  def player_turn(player)
+    next_move = get_next_move(player)
     make_move(next_move, player)
     @most_recent_move = next_move
     puts @board_for_display
+  end
+
+  def get_next_move(player)
+    color = (player.color == 'white' ? 'White' : 'Black')
+    puts "#{color} player, Make your next move"
+    print '> '
+    next_move = gets.strip.downcase
+    until valid_move?(next_move, player)
+      puts 'Incorrect choice. Try again'
+      print '> '
+      next_move = gets.strip.downcase
+    end
+    next_move
   end
 
   # next_move should look like this: "a2a4"
@@ -352,11 +362,12 @@ class ChessGame
   end
 end
 chess = ChessGame.new
-p chess.instance_variable_get(:@board)
-puts chess.instance_variable_get(:@board_for_display)
+# p chess.instance_variable_get(:@board)
+# puts chess.instance_variable_get(:@board_for_display)
 
-player1 = chess.instance_variable_get(:@player1)
-player2 = chess.instance_variable_get(:@player2)
+# player1 = chess.instance_variable_get(:@player1)
+# player2 = chess.instance_variable_get(:@player2)
+chess.play_game
 # chess.make_move('d2d4', player1)
 # chess.make_move('d4d5', player1)
 # chess.make_move('e7e5', player2)
@@ -365,12 +376,11 @@ player2 = chess.instance_variable_get(:@player2)
 # chess.make_move('e1g1', player1)
 # chess.make_move('f1g1', player1)
 # chess.get_next_move(player2)
-chess.get_next_move(player1)
+# chess.get_next_move(player1)
 # chess.get_next_move(player2)
-chess.get_next_move(player1)
-chess.get_next_move(player2)
-chess.get_next_move(player1)
-p chess.instance_variable_get(:@player2).player_pieces
+# chess.get_next_move(player1)
+# chess.get_next_move(player2)
+# chess.get_next_move(player1)
 # chess.get_next_move(player2)
 # chess.get_next_move(player1)
 # chess.get_next_move(player2)
@@ -388,6 +398,6 @@ p chess.instance_variable_get(:@player2).player_pieces
 # p chess.king_is_in_check?(player1)
 # p chess.king_is_in_check?(player2)
 # p chess.promote_pawn(['g', 1], player2)
-chess.instance_variable_get(:@board)
+# chess.instance_variable_get(:@board)
 # p player2.player_pieces
-puts chess.instance_variable_get(:@board_for_display)
+# puts chess.instance_variable_get(:@board_for_display)
