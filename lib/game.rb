@@ -106,7 +106,9 @@ class ChessGame
       player.king_moved == false &&
       king_moves_2_places_horizontally?(start_square, end_square) &&
       rook_has_not_moved?(start_square, end_square, player) &&
-      path_between_king_and_rook_empty?(start_square, end_square, player)
+      path_between_king_and_rook_empty?(start_square, end_square, player) #&&
+      # !king_will_be_in_check_during_castling?(start_square, end_square, player) #&&
+      # !king_will_be_in_check_after_castling?(start_square, end_square, player)
   end
 
   def king_moves_2_places_horizontally?(start_square, end_square)
@@ -145,27 +147,42 @@ class ChessGame
     true
   end
 
-  def square_empty?(square)
-    @board[square].empty?
+  # def king_will_be_in_check_during_castling?(start_square, end_square, player)
+  #   add_or_substract_file =  if king_moved_towards_rook_h?(start_square, end_square)
+  #                               :+
+  #                            else
+  #                               :-
+  #                            end
+  #   square = [start_square[0], start_square[1]]
+  #   square[0] = square[0].ord.public_send(add_or_substract, 1).chr
+  #   loop do
+  #     return true if move_puts_the_king_in_check?(start_square, square, player)
+
+  #     break if square == end_square
+  #     square[0] = square[0].ord.public_send(add_or_substract, 1).chr
+  #   end
+  #   false
+  # end
+
+  def square_empty?(square, board = @board)
+    board[square].empty?
   end
 
   # checks if a piece belongs to the player whose turn it currently is
-  def piece_belongs_to_player?(square, player)
-    piece = @board[square]
+  def piece_belongs_to_player?(square, player, board = @board)
+    piece = board[square]
     player.player_pieces.key?(piece)
   end
 
   def legal_move?(start_square, end_square, player)
-    # return false if move_puts_the_king_in_check?
-
     piece = read_piece_name(start_square)
     piece.allowed_moves(start_square, end_square, player, @board).include?(end_square) ||
       castling_move?(start_square, end_square, player, piece) ||
       en_passant?(start_square, end_square, player, piece)
   end
 
-  def read_piece_name(square)
-    unicode_piece = @board[square]
+  def read_piece_name(square, board = @board)
+    unicode_piece = board[square]
     pieces = [@knight, @pawn, @rook, @bishop, @queen, @king]
     pieces.each { |piece| return piece if piece.equals_unicode_piece?(unicode_piece) }
   end
@@ -175,14 +192,15 @@ class ChessGame
     start_square = [next_move[0], next_move[1].to_i] # e.g. = ['a', 2]
     end_square = [next_move[2], next_move[3].to_i]
     unicode_piece = @board[start_square]
-    # return no, you have to escape from check if move_puts_the_king_in_check? && king_is_in_check?(player)
+    return illegal_move_message(player, true) if move_puts_the_king_in_check?(start_square, end_square, player) && king_is_in_check?(player)
 
-    # return no, it puts the king in check if @king.equals_unicode_piece?(unicode_piece) &&move_puts_the_king_in_check?(player)
+    return illegal_move_message(player, false) if move_puts_the_king_in_check?(start_square, end_square, player)
 
     return perform_en_passant(start_square, end_square, player, unicode_piece) if en_passant?(start_square, end_square, player)
 
     return perform_castling(start_square, end_square, player) if castling_move?(start_square, end_square, player)
 
+    # perform standard actions:
     remember_moved_king(player) if @king.equals_unicode_piece?(unicode_piece)
     remember_moved_rook(start_square, player) if @rook.equals_unicode_piece?(unicode_piece)
     update_opponents_pieces(end_square, player) if makes_a_capture?(end_square)
@@ -190,23 +208,37 @@ class ChessGame
     promote_pawn(end_square, player) if promotion?(end_square, player)
   end
 
-  def king_is_in_check?(player)
+  def illegal_move_message(player, has_to_escape_check)
+    case has_to_escape_check
+    when true then puts "Illegal move - doesn't escape king from check. Try again:"
+    when false then puts 'Illegal move - puts the king in check. Try again:'
+    end
+    player_turn(player)
+  end
+
+  def king_is_in_check?(player, board = @board)
     king_unicode = player.king
-    king_square = @board.key(king_unicode)
+    king_square = board.key(king_unicode)
     opponent = (player == @player1 ? @player2 : @player1)
 
-    @board.each_key do |square|
-      next if square_empty?(square) || piece_belongs_to_player?(square, player)
+    board.each_key do |square|
+      next if square_empty?(square, board) || piece_belongs_to_player?(square, player, board)
 
-      piece = read_piece_name(square)
-      return true if piece.allowed_moves(square, king_square, opponent, @board).include?(king_square)
+      piece = read_piece_name(square, board)
+      return true if piece.allowed_moves(square, king_square, opponent, board).include?(king_square)
     end
     false
   end
 
-  # def move_puts_the_king_in_check?
-    # 
-  # end
+  def move_puts_the_king_in_check?(start_square, end_square, player)
+    mock_board = Hash.new(0)
+    @board.each do |square, piece|
+      mock_board[square] = piece
+    end
+    mock_board[end_square] = mock_board[start_square]
+    mock_board[start_square] = ''
+    king_is_in_check?(player, mock_board)
+  end
 
   def promotion?(end_square, player)
     unicode_piece = @board[end_square]
@@ -371,29 +403,31 @@ end
 chess = ChessGame.new
 # p chess.instance_variable_get(:@board)
 # puts chess.instance_variable_get(:@board_for_display)
-
+chess.play_game
 # player1 = chess.instance_variable_get(:@player1)
 # player2 = chess.instance_variable_get(:@player2)
-chess.play_game
-# chess.make_move('d2d4', player1)
-# chess.make_move('d4d5', player1)
-# chess.make_move('e7e5', player2)
-# chess.make_move('d5e6', player1)
-
-# chess.make_move('e1g1', player1)
-# chess.make_move('f1g1', player1)
-# chess.get_next_move(player2)
-# chess.get_next_move(player1)
-# chess.get_next_move(player2)
-# chess.get_next_move(player1)
-# chess.get_next_move(player2)
-# chess.get_next_move(player1)
-# chess.get_next_move(player2)
-# chess.get_next_move(player1)
-# chess.get_next_move(player2)
+# chess.make_move('e2e4', player1)
+# chess.make_move('f7f5', player2)
+# chess.make_move('e4f5', player1)
+# chess.make_move('e7e6', player2)
+# chess.make_move('b2b4', player1)
+# chess.make_move('d8g5', player2)
+# chess.make_move('a2a4', player1)
+# chess.make_move('g5e3', player2)
+# chess.make_move('e2e3', player1)
+# chess.player_turn(player2)
+# chess.player_turn(player1)
+# chess.player_turn(player2)
+# chess.player_turn(player1)
+# chess.player_turn(player2)
+# chess.player_turn(player1)
+# chess.player_turn(player2)
+# chess.player_turn(player1)
+# chess.player_turn(player2)
 # # p chess.castling_move?(['e', 1], ['g', 1], player1)
 # p player2.player_pieces
 # p chess.instance_variable_get(:@board)
+# p chess.move_puts_the_king_in_check?(['e', 2], ['e', 3], player1)
 
 # puts chess.instance_variable_get(:@board_for_display)
 
@@ -405,6 +439,6 @@ chess.play_game
 # p chess.king_is_in_check?(player1)
 # p chess.king_is_in_check?(player2)
 # p chess.promote_pawn(['g', 1], player2)
-# chess.instance_variable_get(:@board)
+p chess.instance_variable_get(:@board)
 # p player2.player_pieces
-# puts chess.instance_variable_get(:@board_for_display)
+puts chess.instance_variable_get(:@board_for_display)
