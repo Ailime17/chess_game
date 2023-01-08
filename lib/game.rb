@@ -106,9 +106,9 @@ class ChessGame
       player.king_moved == false &&
       king_moves_2_places_horizontally?(start_square, end_square) &&
       rook_has_not_moved?(start_square, end_square, player) &&
-      path_between_king_and_rook_empty?(start_square, end_square, player) #&&
-      # !king_will_be_in_check_during_castling?(start_square, end_square, player) #&&
-      # !king_will_be_in_check_after_castling?(start_square, end_square, player)
+      path_between_king_and_rook_empty?(start_square, end_square, player) &&
+      !king_will_be_in_check_during_castling?(start_square, end_square, player) &&
+      !king_will_be_in_check_after_castling?(start_square, end_square, player)
   end
 
   def king_moves_2_places_horizontally?(start_square, end_square)
@@ -147,22 +147,43 @@ class ChessGame
     true
   end
 
-  # def king_will_be_in_check_during_castling?(start_square, end_square, player)
-  #   add_or_substract_file =  if king_moved_towards_rook_h?(start_square, end_square)
-  #                               :+
-  #                            else
-  #                               :-
-  #                            end
-  #   square = [start_square[0], start_square[1]]
-  #   square[0] = square[0].ord.public_send(add_or_substract, 1).chr
-  #   loop do
-  #     return true if move_puts_the_king_in_check?(start_square, square, player)
+  def king_will_be_in_check_during_castling?(start_square, end_square, player)
+    add_or_substract_file =  if king_moved_towards_rook_h?(start_square, end_square)
+                                :+
+                             else
+                                :-
+                             end
+    square = [start_square[0], start_square[1]]
+    square[0] = square[0].ord.public_send(add_or_substract_file, 1).chr
+    loop do
+      return true if move_puts_the_king_in_check?(start_square, square, player)
 
-  #     break if square == end_square
-  #     square[0] = square[0].ord.public_send(add_or_substract, 1).chr
-  #   end
-  #   false
-  # end
+      break if square == end_square
+      square[0] = square[0].ord.public_send(add_or_substract_file, 1).chr
+    end
+    false
+  end
+
+  def king_will_be_in_check_after_castling?(king_square, end_square, player)
+    mock_board = Hash.new(0)
+    @board.each do |square, piece|
+      mock_board[square] = piece
+    end
+    mock_board[end_square] = mock_board[king_square]
+    mock_board[king_square] = ''
+    if king_moved_towards_rook_h?(king_square, end_square)
+      num_of_squares_from_king_to_rook = 3
+      add_or_substract_file =  :+
+    else
+      add_or_substract_file =  :-
+      num_of_squares_from_king_to_rook = 4
+    end
+    new_rook_square = [king_square[0].ord.public_send(add_or_substract_file, 1).chr, king_square[1]]
+    old_rook_square = [king_square[0].ord.public_send(add_or_substract_file, num_of_squares_from_king_to_rook).chr, king_square[1]]
+    mock_board[new_rook_square] = mock_board[old_rook_square]
+    mock_board[old_rook_square] = ''
+    king_is_in_check?(player, mock_board)
+  end
 
   def square_empty?(square, board = @board)
     board[square].empty?
