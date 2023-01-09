@@ -8,11 +8,12 @@ require_relative 'special_moves'
 
 # class for the command line chess game
 class ChessGame
+  include Board
   include SpecialMoves
 
   def initialize
-    @board = Board.new.board
-    @board_for_display = Board.new.board_for_display
+    @board = make_board
+    @board_for_display = make_board_for_display
     @player1 = PlayerOne.new
     @player2 = PlayerTwo.new
     @knight = KnightMoves.new
@@ -196,28 +197,6 @@ class ChessGame
     opponent = (player == @player1 ? @player2 : @player1)
     unicode_piece = @board[end_square]
     opponent.player_pieces[unicode_piece] -= 1
-  end
-
-  def update_both_boards(start_square, end_square, unicode_piece)
-    update_board(start_square, end_square, unicode_piece)
-    update_board_for_display(start_square, end_square, unicode_piece)
-  end
-
-  def update_board(start_square, end_square, unicode_piece)
-    @board[end_square] = unicode_piece
-    @board[start_square] = ''
-  end
-
-  def update_board_for_display(start_square, end_square, unicode_piece)
-    start_rank = start_square[1].to_s
-    start_file = start_square[0]
-    end_rank = end_square[1].to_s
-    end_file = end_square[0]
-    # empty the square where the piece was:
-    @board_for_display[@board_for_display.index(start_rank) + Board.new.get_file_index(start_file)] = ' '
-    # place the piece on the new square:
-    @board_for_display[@board_for_display.index(end_rank) + Board.new.get_file_index(end_file)] = unicode_piece
-    Board.new.make_empty_black_squares_visibly_black(@board_for_display)
   end
 
   def perform_castling(start_square, end_square, player)
