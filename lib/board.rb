@@ -1,16 +1,14 @@
 require_relative 'players'
 
-# class that sets up the board
+# class that sets up the boards
 class Board
-  attr_reader :board, :board_for_display, :white_squares, :black_squares
+  attr_reader :board, :board_for_display
 
   def initialize
     @white = PlayerOne.new
     @black = PlayerTwo.new
     @board = make_board
     @board_for_display = make_board_for_display
-    @white_squares = read_squares('white')
-    @black_squares = read_squares('black')
   end
 
   # files are columns & ranks are rows on the board
@@ -86,6 +84,7 @@ class Board
            a    b    c    d    e    f    g    h
     }
     place_pieces_on_board(board)
+    make_empty_black_squares_visibly_black(board)
     board
   end
 
@@ -108,5 +107,22 @@ class Board
       end
     end
     squares
+  end
+
+  def make_empty_black_squares_visibly_black(board)
+    unicode_black_square = "\u2605"
+    black_squares = read_squares('black')
+    black_squares.each do |square|
+      rank = square[1].to_s
+      file = square[0]
+      board[board.index(rank) + get_file_index(file)] = unicode_black_square if board[board.index(rank) + get_file_index(file)] == ' '
+    end
+  end
+
+  # for @board_for_display:
+  # reads the number of index places to add to the index of a particular rank, based on which file we want to visit
+  def get_file_index(file)
+    file_indexes = { 'a' => 4, 'b' => 9, 'c' => 14, 'd' => 19, 'e' => 24, 'f' => 29, 'g' => 34, 'h' => 39 }
+    file_indexes[file]
   end
 end
