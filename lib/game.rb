@@ -37,10 +37,10 @@ class ChessGame
     puts @board_for_display
     player = 1
     loop do
-      # if checkmate? || draw? || @game_ended
-      #   display_end_message
-      #   break
-      # end
+      if checkmate? || draw? #|| @game_ended
+        display_end_message
+        break
+      end
 
       case player
       when 1
@@ -50,37 +50,6 @@ class ChessGame
         player_turn(@player2)
         player = 1
       end
-    end
-  end
-
-  def draw?
-    insufficient_material_draw?
-    stalemate?
-  end
-
-  def stalemate?
-    player_not_in_check_and_has_no_legal_moves?(@player1) ||
-      player_not_in_check_and_has_no_legal_moves?(@player2)
-  end
-
-  def player_not_in_check_and_has_no_legal_moves?(player)
-    !king_is_in_check?(player) && player_has_no_legal_moves?(player)
-  end
-
-  def insufficient_material_draw?
-    insufficient_white_pieces = insufficient_player_pieces?(@player1)
-    insufficient_black_pieces = insufficient_player_pieces?(@player2)
-    (insufficient_white_pieces && insufficient_black_pieces) || one_player_has_lone_king
-  end
-
-  def one_player_has_lone_king
-    @player1.player_pieces == @player1.lone_king || @player2.player_pieces == @player2.lone_king
-  end
-
-  def insufficient_player_pieces?(player)
-    case player.player_pieces
-    when player.lone_king, player.king_and_knight, player.king_and_bishop then true
-    else false
     end
   end
 
@@ -101,6 +70,45 @@ class ChessGame
 
         return false if legal_move?(square, end_square, player)
       end
+    end
+  end
+
+  def draw?
+    insufficient_material_draw?
+    stalemate?
+  end
+
+  def insufficient_material_draw?
+    insufficient_white_pieces = insufficient_player_pieces?(@player1)
+    insufficient_black_pieces = insufficient_player_pieces?(@player2)
+    (insufficient_white_pieces && insufficient_black_pieces) || one_player_has_lone_king
+  end
+
+  def one_player_has_lone_king
+    @player1.player_pieces == @player1.lone_king || @player2.player_pieces == @player2.lone_king
+  end
+
+  def insufficient_player_pieces?(player)
+    case player.player_pieces
+    when player.lone_king, player.king_and_knight, player.king_and_bishop then true
+    else false
+    end
+  end
+
+  def stalemate?
+    player_not_in_check_and_has_no_legal_moves?(@player1) ||
+      player_not_in_check_and_has_no_legal_moves?(@player2)
+  end
+
+  def player_not_in_check_and_has_no_legal_moves?(player)
+    !king_is_in_check?(player) && player_has_no_legal_moves?(player)
+  end
+
+  def display_end_message
+    if checkmate?
+      puts 'Checkmate! Game over'
+    elsif draw?
+      puts "It's a draw! Game over"
     end
   end
 
