@@ -31,7 +31,7 @@ class ChessGame
     introduction
     player = 1
     loop do
-      if checkmate? || draw? #|| @game_ended
+      if checkmate? || draw? || @game_exited
         display_end_message
         break
       end
@@ -128,6 +128,8 @@ class ChessGame
       puts 'Checkmate! Game over'
     elsif draw?
       puts "It's a draw! Game over"
+    elsif @game_exited
+      puts 'Game exited'
     end
   end
 
@@ -137,6 +139,11 @@ class ChessGame
                 else
                   get_next_move(player)
                 end
+    if player_exits_game?(next_move)
+      @game_exited = true
+      # ask_to_save_game
+      return
+    end
     make_move(next_move, player)
     @most_recent_move = next_move
     puts @board_for_display
@@ -147,13 +154,33 @@ class ChessGame
     puts "#{color} player, Make your move"
     print '> '
     next_move = gets.strip.downcase
-    until valid_move?(next_move, player)
+    until valid_move?(next_move, player) || player_exits_game?(next_move)
       puts 'Incorrect or illegal choice. Try again'
       print '> '
       next_move = gets.strip.downcase
     end
     next_move
   end
+
+  def player_exits_game?(input)
+    input == 'x'
+  end
+
+  # def ask_to_save_game
+  #   answer_to_save = get_answer_to_save_game
+  # end
+
+  # def get_answer_to_save_game
+  #   puts 'Save game before exiting? y / n'
+  #   print '> '
+  #   answer_to_save = gets.strip.downcase
+  #   until %w[y n].include?(answer_to_save)
+  #     puts "Oops! I don't understand. Save game before exiting? \ny / n"
+  #     print '> '
+  #     answer_to_save = gets.strip.downcase
+  #   end
+  #   answer_to_save
+  # end
 
   # (next_move should look like this: "a2a4")
   def valid_move?(next_move, player)
