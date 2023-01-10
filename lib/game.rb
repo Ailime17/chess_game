@@ -55,6 +55,16 @@ class ChessGame
 
   def draw?
     insufficient_material_draw?
+    stalemate?
+  end
+
+  def stalemate?
+    player_not_in_check_and_has_no_legal_moves?(@player1) ||
+      player_not_in_check_and_has_no_legal_moves?(@player2)
+  end
+
+  def player_not_in_check_and_has_no_legal_moves?(player)
+    !king_is_in_check?(player) && player_has_no_legal_moves?(player)
   end
 
   def insufficient_material_draw?
@@ -79,10 +89,10 @@ class ChessGame
   end
 
   def king_is_in_checkmate?(player)
-    king_is_in_check?(player) && king_cannot_escape_check?(player)
+    king_is_in_check?(player) && player_has_no_legal_moves?(player)
   end
 
-  def king_cannot_escape_check?(player)
+  def player_has_no_legal_moves?(player)
     @board.each_key do |square|
       next unless piece_belongs_to_player?(square, player)
 
@@ -176,7 +186,6 @@ class ChessGame
     king_is_in_check?(player, mock_board)
   end
 
-  # (the order of methods is very important in make_move)
   def make_move(next_move, player)
     start_square = [next_move[0], next_move[1].to_i] # e.g. = ['a', 2]
     end_square = [next_move[2], next_move[3].to_i]
