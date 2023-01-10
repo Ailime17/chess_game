@@ -1,5 +1,6 @@
-# module with methods for ChessGame class for checking if the move is a castling or en passant
+# module with methods for ChessGame class for checking if the move is a castling, en passant or promotion
 module SpecialMoves
+  # castling move:
   def castling_move?(start_square, end_square, player, piece = read_piece_name(start_square))
     piece == @king &&
       !king_is_in_check?(player) &&
@@ -88,6 +89,7 @@ module SpecialMoves
     king_is_in_check?(player, mock_board)
   end
 
+  # en_passant:
   def en_passant?(start_square, end_square, player, player_piece = read_piece_name(start_square))
     return false if @most_recent_move.nil?
 
@@ -117,5 +119,17 @@ module SpecialMoves
   def player_pawn_moves_where_the_opponent_pawn_would_be_if_it_moved_one_place?(current_player, end_square)
     add_or_substract_opponent_rank = (current_player == @player1 ? :- : :+)
     end_square == [@most_recent_start_square[0], @most_recent_start_square[1].public_send(add_or_substract_opponent_rank, 1)]
+  end
+
+  # promotion:
+  def promotion?(end_square, player)
+    unicode_piece = @board[end_square]
+    @pawn.equals_unicode_piece?(unicode_piece) &&
+      pawn_reached_the_end_of_the_board?(end_square, player)
+  end
+
+  def pawn_reached_the_end_of_the_board?(end_square, player)
+    rank = end_square[1]
+    (rank == 8 && player == @player1) || (rank == 1 && player == @player2)
   end
 end
