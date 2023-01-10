@@ -185,10 +185,7 @@ class ChessGame
   end
 
   def move_puts_the_king_in_check?(start_square, end_square, player)
-    mock_board = Hash.new(0)
-    @board.each do |square, piece|
-      mock_board[square] = piece
-    end
+    mock_board = create_mock_board
     mock_board[end_square] = mock_board[start_square]
     mock_board[start_square] = ''
     king_is_in_check?(player, mock_board)
