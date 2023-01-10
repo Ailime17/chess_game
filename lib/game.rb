@@ -37,8 +37,8 @@ class ChessGame
     puts @board_for_display
     player = 1
     loop do
-      # if winner? || draw? || @game_ended
-      #   end_message
+      # if checkmate? || draw? || @game_ended
+      #   display_end_message
       #   break
       # end
 
@@ -74,6 +74,26 @@ class ChessGame
     end
   end
 
+  def checkmate?
+    king_is_in_checkmate?(@player1) || king_is_in_checkmate?(@player2)
+  end
+
+  def king_is_in_checkmate?(player)
+    king_is_in_check?(player) && king_cannot_escape_check?(player)
+  end
+
+  def king_cannot_escape_check?(player)
+    @board.each_key do |square|
+      next unless piece_belongs_to_player?(square, player)
+
+      @board.each_key do |end_square|
+        next if piece_belongs_to_player?(end_square, player)
+
+        return false if legal_move?(square, end_square, player)
+      end
+    end
+  end
+
   def player_turn(player)
     next_move = get_next_move(player)
     make_move(next_move, player)
@@ -88,7 +108,7 @@ class ChessGame
     print '> '
     next_move = gets.strip.downcase
     until valid_move?(next_move, player)
-      puts 'Incorrect choice. Try again'
+      puts 'Incorrect or illegal choice. Try again'
       print '> '
       next_move = gets.strip.downcase
     end
@@ -120,9 +140,10 @@ class ChessGame
 
   def legal_move?(start_square, end_square, player)
     piece = read_piece_name(start_square)
-    piece.allowed_moves(start_square, end_square, player, @board).include?(end_square) ||
+    (piece.allowed_moves(start_square, end_square, player, @board).include?(end_square) ||
       castling_move?(start_square, end_square, player, piece) ||
-      en_passant?(start_square, end_square, player, piece)
+      en_passant?(start_square, end_square, player, piece)) &&
+      !move_puts_the_king_in_check?(start_square, end_square, player)
   end
 
   def read_piece_name(square, board = @board)
@@ -160,15 +181,14 @@ class ChessGame
     start_square = [next_move[0], next_move[1].to_i] # e.g. = ['a', 2]
     end_square = [next_move[2], next_move[3].to_i]
     unicode_piece = @board[start_square]
-    return illegal_move_message(player, true) if move_puts_the_king_in_check?(start_square, end_square, player) && king_is_in_check?(player)
+    # return illegal_move_message(player, true) if move_puts_the_king_in_check?(start_square, end_square, player) && king_is_in_check?(player)
 
-    return illegal_move_message(player, false) if move_puts_the_king_in_check?(start_square, end_square, player)
+    # return illegal_move_message(player, false) if move_puts_the_king_in_check?(start_square, end_square, player)
 
     return perform_en_passant(start_square, end_square, player, unicode_piece) if en_passant?(start_square, end_square, player)
 
     return perform_castling(start_square, end_square, player) if castling_move?(start_square, end_square, player)
 
-    # perform standard actions:
     remember_moved_king(player) if @king.equals_unicode_piece?(unicode_piece)
     remember_moved_rook(start_square, player) if @rook.equals_unicode_piece?(unicode_piece)
     update_opponents_pieces(end_square, player) if makes_a_capture?(end_square)
@@ -176,13 +196,13 @@ class ChessGame
     promote_pawn(end_square, player) if promotion?(end_square, player)
   end
 
-  def illegal_move_message(player, has_to_escape_check)
-    case has_to_escape_check
-    when true then puts "Illegal move - doesn't escape king from check. Try again:"
-    when false then puts 'Illegal move - puts the king in check. Try again:'
-    end
-    player_turn(player)
-  end
+  # def illegal_move_message(player, has_to_escape_check)
+  #   case has_to_escape_check
+  #   when true then puts "Illegal move - doesn't escape king from check. Try again:"
+  #   when false then puts 'Illegal move - puts the king in check. Try again:'
+  #   end
+  #   player_turn(player)
+  # end
 
   def perform_en_passant(start_square, end_square, player, unicode_piece)
     update_opponents_pieces(@most_recent_end_square, player)
