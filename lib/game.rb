@@ -234,17 +234,6 @@ class ChessGame
     !square_empty?(end_square)
   end
 
-  def promotion?(end_square, player)
-    unicode_piece = @board[end_square]
-    @pawn.equals_unicode_piece?(unicode_piece) &&
-      pawn_reached_the_end_of_the_board?(end_square, player)
-  end
-
-  def pawn_reached_the_end_of_the_board?(end_square, player)
-    rank = end_square[1]
-    (rank == 8 && player == @player1) || (rank == 1 && player == @player2)
-  end
-
   def promote_pawn(end_square, player)
     piece_to_promote_to = get_promotion_answer
     new_unicode_piece = case piece_to_promote_to
