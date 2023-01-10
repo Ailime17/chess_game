@@ -69,10 +69,7 @@ module SpecialMoves
   end
 
   def king_will_be_in_check_after_castling?(king_square, end_square, player)
-    mock_board = Hash.new(0)
-    @board.each do |square, piece|
-      mock_board[square] = piece
-    end
+    mock_board = create_mock_board
     mock_board[end_square] = mock_board[king_square]
     mock_board[king_square] = ''
     if king_moved_towards_rook_h?(king_square, end_square)
@@ -87,6 +84,14 @@ module SpecialMoves
     mock_board[new_rook_square] = mock_board[old_rook_square]
     mock_board[old_rook_square] = ''
     king_is_in_check?(player, mock_board)
+  end
+
+  def create_mock_board
+    mock_board = Hash.new(0)
+    @board.each do |square, piece|
+      mock_board[square] = piece
+    end
+    mock_board
   end
 
   # en_passant:
