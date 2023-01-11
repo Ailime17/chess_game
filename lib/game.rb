@@ -6,12 +6,14 @@ require_relative 'queen'
 require_relative 'king'
 require_relative 'special_moves'
 require_relative 'bot'
+require_relative 'yaml_chess'
 
 # class for the command line chess game
 class ChessGame
   include Board
   include SpecialMoves
   include Bot
+  include YamlChessGame
 
   def initialize
     @board = make_board
@@ -27,39 +29,70 @@ class ChessGame
   end
 
   def play_game
-    puts @board_for_display
-    introduction
-    player = 1
+    @player_number = 1
+    start_new_game_or_continue_previous_session
     loop do
       if checkmate? || draw? || @game_exited
         display_end_message
         break
       end
 
-      case player
+      case @player_number
       when 1
         player_turn(@player1)
-        player = 2
+        @player_number = 2
       when 2
         player_turn(@player2)
-        player = 1
+        @player_number = 1
       end
     end
   end
 
   private
 
-  def introduction
+  def start_new_game_or_continue_previous_session
+    display_chess_board
+    introduce_game
+    ask_to_open_saved_game if File.exist?('saved_yaml/saved_game.yaml')
+    if @player_opens_saved_game
+      open_saved_game
+      display_chess_board
+    else
+      set_up_players
+    end
+    complete_introduction
+  end
+
+  def display_chess_board
+    puts @board_for_display
+  end
+
+  def introduce_game
+    puts %{
+      Welcome to the game of chess! To make a move, write the current
+    position of your piece followed by the position you want your piece
+    to go to, e.g. a2a4, e2e3, b2b4 etc. .
+    }
+  end
+
+  def complete_introduction
+    puts %{
+      To save the game at any point: enter 's',
+      to exit the game: enter 'x'.
+      3.. 2.. 1.. Game starts.
+    }
+  end
+
+  def set_up_players
+    # ask_about_opponent
     print %{
-        Welcome to the game of chess! To make a move, write the current
-      position of your piece followed by the position you want your piece
-      to go to, e.g. a2a4, e2e3, b2b4 etc. .
       Do you want to play against a bot?
       y / n
       > }
     opponent_answer = gets.strip.downcase
     answers = %w[y n]
     until answers.include?(opponent_answer)
+      # wrong_opponent_answer_so_ask_again
       print %{
       Oops! I don't understand. Do you want to play against a bot?
       Y / N
@@ -67,8 +100,8 @@ class ChessGame
       opponent_answer = gets.strip.downcase
     end
     @bot_activated = opponent_answer == 'y'
-    puts %{
-      Great choice! Game starts.
+    puts %{ 
+    Great choice!
     }
   end
 
@@ -139,14 +172,13 @@ class ChessGame
                 else
                   get_next_move(player)
                 end
-    if player_exits_game?(next_move)
-      @game_exited = true
-      # ask_to_save_game
-      return
-    end
+    return safely_exit_game if player_exits_game?(next_move)
+
+    return save_and_continue_game(player) if player_saves_game?(next_move)
+
     make_move(next_move, player)
     @most_recent_move = next_move
-    puts @board_for_display
+    display_chess_board
   end
 
   def get_next_move(player)
@@ -154,7 +186,8 @@ class ChessGame
     puts "#{color} player, Make your move"
     print '> '
     next_move = gets.strip.downcase
-    until valid_move?(next_move, player) || player_exits_game?(next_move)
+    until player_entered_valid_input?(next_move, player)
+      # wrong_move_input_so_ask_again
       puts 'Incorrect or illegal choice. Try again'
       print '> '
       next_move = gets.strip.downcase
@@ -162,25 +195,30 @@ class ChessGame
     next_move
   end
 
+  def player_entered_valid_input?(next_move, player)
+    valid_move?(next_move, player) ||
+      player_exits_game?(next_move) ||
+      player_saves_game?(next_move)
+  end
+
   def player_exits_game?(input)
     input == 'x'
   end
 
-  # def ask_to_save_game
-  #   answer_to_save = get_answer_to_save_game
-  # end
+  def player_saves_game?(input)
+    input == 's'
+  end
 
-  # def get_answer_to_save_game
-  #   puts 'Save game before exiting? y / n'
-  #   print '> '
-  #   answer_to_save = gets.strip.downcase
-  #   until %w[y n].include?(answer_to_save)
-  #     puts "Oops! I don't understand. Save game before exiting? \ny / n"
-  #     print '> '
-  #     answer_to_save = gets.strip.downcase
-  #   end
-  #   answer_to_save
-  # end
+  def safely_exit_game
+    @game_exited = true
+    ask_to_save_game
+  end
+
+  def save_and_continue_game(player)
+    save_game
+    puts 'Game saved.'
+    player_turn(player)
+  end
 
   # (next_move should look like this: "a2a4")
   def valid_move?(next_move, player)
@@ -325,6 +363,7 @@ class ChessGame
 
   def get_promotion_answer
     answers = %w[queen knight rook bishop]
+    # ask_about_pawn_promotion
     puts %{
     Good job! Choose a piece you want your pawn to be promoted to:
     Queen / Knight / Rook / Bishop
@@ -332,6 +371,7 @@ class ChessGame
     print '> '
     answer = gets.strip.downcase
     until answers.include?(answer)
+      # wrong_promotion_answer_so_ask_again
       puts %{
       Try again. Choose a piece you want your pawn to be promoted to:
       Queen / Knight / Rook / Bishop
