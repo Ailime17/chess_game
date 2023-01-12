@@ -1,17 +1,7 @@
-require_relative 'board'
-require_relative 'players'
-require_relative 'knight'
-require_relative 'pawn'
-require_relative 'queen'
-require_relative 'king'
-require_relative 'special_moves'
-require_relative 'bot'
-require_relative 'yaml_chess'
-require_relative 'output'
-
-# ['board','players','knight','pawn','queen','king','special_moves','bot','yaml_chess','output'].each do |file|
-#   require_relative file
-# end
+files = %w[board players knight pawn queen king special_moves bot yaml_chess output]
+files.each do |file|
+  require_relative file
+end
 
 # class for the command line chess game
 class ChessGame
@@ -279,15 +269,13 @@ class ChessGame
   end
 
   def perform_castling(start_square, end_square, player)
-    a_rook = (player == @player1 ? ['a', 1] : ['a', 8])
-    h_rook = (player == @player1 ? ['h', 1] : ['h', 8])
     king_square = start_square
     king_piece = @board[king_square]
     if king_moved_towards_rook_h?(start_square, end_square)
-      rook_square = h_rook
+      rook_square = player.rook_square('h')
       square_next_to_king = [(king_square[0].ord + 1).chr, king_square[1]]
     else
-      rook_square = a_rook
+      rook_square = player.rook_square('a')
       square_next_to_king = [(king_square[0].ord - 1).chr, king_square[1]]
     end
     rook_piece = @board[rook_square]
