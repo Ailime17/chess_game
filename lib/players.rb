@@ -28,6 +28,10 @@ class PlayerOne
   def king_and_bishop
     { @queen => 0, @king => 1, @rook => 0, @knight => 0, @bishop => 1, @pawn => 0 }
   end
+
+  def rook_square(file)
+    file == 'a' ? ['a', 1] : ['h', 1]
+  end
 end
 
 # class for black pieces
@@ -60,8 +64,8 @@ class PlayerTwo
   def king_and_bishop
     { @queen => 0, @king => 1, @rook => 0, @knight => 0, @bishop => 1, @pawn => 0 }
   end
-end
 
-# class for bot black pieces
-# class BotPlayer
-# end
+  def rook_square(file)
+    file == 'a' ? ['a', 8] : ['h', 8]
+  end
+end
