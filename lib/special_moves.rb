@@ -32,13 +32,11 @@ module SpecialMoves
   end
 
   def path_between_king_and_rook_empty?(start_square, end_square, player)
-    a_rook = (player == @player1 ? ['a', 1] : ['a', 8])
-    h_rook = (player == @player1 ? ['h', 1] : ['h', 8])
     if king_moved_towards_rook_h?(start_square, end_square)
-      end_sq = h_rook
+      end_sq = player.rook_square('h')
       add_or_substract = :+
     else
-      end_sq = a_rook
+      end_sq = player.rook_square('a')
       add_or_substract = :-
     end
     square = [start_square[0], start_square[1]]
