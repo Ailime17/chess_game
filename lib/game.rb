@@ -7,6 +7,11 @@ require_relative 'king'
 require_relative 'special_moves'
 require_relative 'bot'
 require_relative 'yaml_chess'
+require_relative 'output'
+
+# ['board','players','knight','pawn','queen','king','special_moves','bot','yaml_chess','output'].each do |file|
+#   require_relative file
+# end
 
 # class for the command line chess game
 class ChessGame
@@ -14,6 +19,7 @@ class ChessGame
   include SpecialMoves
   include Bot
   include YamlChessGame
+  include Messages
 
   def initialize
     @board = make_board
@@ -32,10 +38,7 @@ class ChessGame
     @player_number = 1
     start_new_game_or_continue_previous_session
     loop do
-      if checkmate? || draw? || @game_exited
-        display_end_message
-        break
-      end
+      break if checkmate? || draw? || @game_exited
 
       case @player_number
       when 1
@@ -46,6 +49,7 @@ class ChessGame
         @player_number = 1
       end
     end
+    display_end_message
   end
 
   private
@@ -63,46 +67,21 @@ class ChessGame
     complete_introduction
   end
 
-  def display_chess_board
-    puts @board_for_display
-  end
-
-  def introduce_game
-    puts %{
-      Welcome to the game of chess! To make a move, write the current
-    position of your piece followed by the position you want your piece
-    to go to, e.g. a2a4, e2e3, b2b4 etc. .
-    }
-  end
-
-  def complete_introduction
-    puts %{
-      To save the game at any point: enter 's',
-      to exit the game: enter 'x'.
-      3.. 2.. 1.. Game starts.
-    }
-  end
-
   def set_up_players
-    # ask_about_opponent
-    print %{
-      Do you want to play against a bot?
-      y / n
-      > }
+    ask_about_opponent
+    opponent_answer = get_answer_about_opponent
+    @bot_activated = opponent_answer == 'y'
+    inform_of_great_choice
+  end
+
+  def get_answer_about_opponent
     opponent_answer = gets.strip.downcase
     answers = %w[y n]
     until answers.include?(opponent_answer)
-      # wrong_opponent_answer_so_ask_again
-      print %{
-      Oops! I don't understand. Do you want to play against a bot?
-      Y / N
-      > }
+      wrong_opponent_answer_so_ask_again
       opponent_answer = gets.strip.downcase
     end
-    @bot_activated = opponent_answer == 'y'
-    puts %{ 
-    Great choice!
-    }
+    opponent_answer
   end
 
   def checkmate?
@@ -156,16 +135,6 @@ class ChessGame
     !king_is_in_check?(player) && player_has_no_legal_moves?(player)
   end
 
-  def display_end_message
-    if checkmate?
-      puts 'Checkmate! Game over'
-    elsif draw?
-      puts "It's a draw! Game over"
-    elsif @game_exited
-      puts 'Game exited'
-    end
-  end
-
   def player_turn(player)
     next_move = if @bot_activated && player == @player2
                   random_legal_move
@@ -182,14 +151,10 @@ class ChessGame
   end
 
   def get_next_move(player)
-    color = (player.color == 'white' ? 'White' : 'Black')
-    puts "#{color} player, Make your move"
-    print '> '
+    ask_for_next_move(player)
     next_move = gets.strip.downcase
     until player_entered_valid_input?(next_move, player)
-      # wrong_move_input_so_ask_again
-      puts 'Incorrect or illegal choice. Try again'
-      print '> '
+      wrong_move_input_so_ask_again
       next_move = gets.strip.downcase
     end
     next_move
@@ -216,7 +181,7 @@ class ChessGame
 
   def save_and_continue_game(player)
     save_game
-    puts 'Game saved.'
+    inform_of_saved_game
     player_turn(player)
   end
 
@@ -286,12 +251,16 @@ class ChessGame
 
     return perform_castling(start_square, end_square, player) if castling_move?(start_square, end_square, player)
 
+    complete_standard_actions_for_a_standard_move(start_square, end_square, player, unicode_piece)
+    promote_pawn(end_square, player) if promotion?(end_square, player)
+    inform_of_move_bot_made_if_bot_is_activated(next_move, player)
+  end
+
+  def complete_standard_actions_for_a_standard_move(start_square, end_square, player, unicode_piece)
     remember_moved_king(player) if @king.equals_unicode_piece?(unicode_piece)
     remember_moved_rook(start_square, player) if @rook.equals_unicode_piece?(unicode_piece)
     update_opponents_pieces(end_square, player) if makes_a_capture?(end_square)
     update_both_boards(start_square, end_square, unicode_piece)
-    promote_pawn(end_square, player) if promotion?(end_square, player)
-    puts "Computer move: #{next_move}" if @bot_activated == true && player == @player2
   end
 
   def perform_en_passant(start_square, end_square, player, unicode_piece)
@@ -322,6 +291,10 @@ class ChessGame
       square_next_to_king = [(king_square[0].ord - 1).chr, king_square[1]]
     end
     rook_piece = @board[rook_square]
+    perform_actions_for_castling(end_square, player, king_square, king_piece, rook_square, square_next_to_king, rook_piece)
+  end
+
+  def perform_actions_for_castling(end_square, player, king_square, king_piece, rook_square, square_next_to_king, rook_piece)
     update_both_boards(king_square, end_square, king_piece) # with king
     update_both_boards(rook_square, square_next_to_king, rook_piece) # with rook
     remember_moved_rook(rook_square, player)
@@ -352,34 +325,30 @@ class ChessGame
                         when 'rook' then player.rook
                         when 'bishop' then player.bishop
                         end
-    # update player_pieces:
-    pawn_piece = player.pawn
-    player.player_pieces[pawn_piece] -= 1
-    player.player_pieces[new_unicode_piece] += 1
-    # update both boards:
-    @board[end_square] = new_unicode_piece
-    update_board_for_display(end_square, end_square, new_unicode_piece)
+    update_player_pieces_with_pawn_promotion(player, new_unicode_piece)
+    update_both_boards_with_pawn_promotion(end_square, new_unicode_piece)
   end
 
   def get_promotion_answer
+    inform_and_ask_about_pawn_promotion
     answers = %w[queen knight rook bishop]
-    # ask_about_pawn_promotion
-    puts %{
-    Good job! Choose a piece you want your pawn to be promoted to:
-    Queen / Knight / Rook / Bishop
-    }
-    print '> '
     answer = gets.strip.downcase
     until answers.include?(answer)
-      # wrong_promotion_answer_so_ask_again
-      puts %{
-      Try again. Choose a piece you want your pawn to be promoted to:
-      Queen / Knight / Rook / Bishop
-      }
-      print '> '
+      wrong_promotion_answer_so_ask_again
       answer = gets.strip.downcase
     end
     answer
+  end
+
+  def update_player_pieces_with_pawn_promotion(player, new_unicode_piece)
+    pawn_piece = player.pawn
+    player.player_pieces[pawn_piece] -= 1
+    player.player_pieces[new_unicode_piece] += 1
+  end
+
+  def update_both_boards_with_pawn_promotion(end_square, new_unicode_piece)
+    @board[end_square] = new_unicode_piece
+    update_board_for_display(end_square, end_square, new_unicode_piece)
   end
 end
 chess = ChessGame.new
