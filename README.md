@@ -1,6 +1,8 @@
 # chess_game
 Command line game of chess.
 
+To view on replit.com: https://replit.com/@TOPstudent/gameofchess?v=1
+
 Assignment from <a href="https://www.theodinproject.com">The Odin Project</a>:
 
 1.Build a command line Chess game where two players can play against each other.
