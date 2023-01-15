@@ -37,7 +37,7 @@ class BishopMoves
   end
 
   def count_places(start_square, end_square, direction)
-    count = 0
+    count = -1
     case direction
     when 'rank'
       start_rank = start_square[1]

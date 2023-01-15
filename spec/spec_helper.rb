@@ -95,4 +95,7 @@ RSpec.configure do |config|
   # as the one that triggered the failure.
   Kernel.srand config.seed
 =end
+  def spec_helper_suppress_output
+    allow($stdout).to receive(:write)
+  end
 end

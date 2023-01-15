@@ -91,6 +91,17 @@ module Board
     end
   end
 
+  def make_empty_black_squares_visibly_black(board)
+    unicode_black_square = "\u2605"
+    black_squares = read_squares('black')
+    black_squares.each do |square|
+      rank = square[1].to_s
+      file = square[0]
+      square_index = board.index(rank) + get_file_index(file)
+      board[square_index] = unicode_black_square if board[square_index] == ' '
+    end
+  end
+
   def read_squares(color_of_squares)
     squares = []
     colors = ['white', 'black'].cycle
@@ -102,17 +113,6 @@ module Board
       end
     end
     squares
-  end
-
-  def make_empty_black_squares_visibly_black(board)
-    unicode_black_square = "\u2605"
-    black_squares = read_squares('black')
-    black_squares.each do |square|
-      rank = square[1].to_s
-      file = square[0]
-      square_index = board.index(rank) + get_file_index(file)
-      board[square_index] = unicode_black_square if board[square_index] == ' '
-    end
   end
 
   def update_board(start_square, end_square, unicode_piece)
@@ -135,15 +135,15 @@ module Board
     make_empty_black_squares_visibly_black(@board_for_display)
   end
 
+  def update_both_boards(start_square, end_square, unicode_piece)
+    update_board(start_square, end_square, unicode_piece)
+    update_board_for_display(start_square, end_square, unicode_piece)
+  end
+
   # for @board_for_display:
   # reads the number of index places to add to the index of a particular rank, based on which file we want to visit
   def get_file_index(file)
     file_indexes = { 'a' => 4, 'b' => 9, 'c' => 14, 'd' => 19, 'e' => 24, 'f' => 29, 'g' => 34, 'h' => 39 }
     file_indexes[file]
-  end
-
-  def update_both_boards(start_square, end_square, unicode_piece)
-    update_board(start_square, end_square, unicode_piece)
-    update_board_for_display(start_square, end_square, unicode_piece)
   end
 end
