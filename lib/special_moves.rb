@@ -31,17 +31,17 @@ module SpecialMoves
     end_square[0] > start_square[0]
   end
 
-  def path_between_king_and_rook_empty?(start_square, end_square, player)
-    if king_moved_towards_rook_h?(start_square, end_square)
-      end_sq = player.rook_square('h')
+  def path_between_king_and_rook_empty?(king_square, end_square, player)
+    if king_moved_towards_rook_h?(king_square, end_square)
+      rook_square = player.rook_square('h')
       add_or_substract = :+
     else
-      end_sq = player.rook_square('a')
+      rook_square = player.rook_square('a')
       add_or_substract = :-
     end
-    square = [start_square[0], start_square[1]]
+    square = [king_square[0], king_square[1]]
     square[0] = square[0].ord.public_send(add_or_substract, 1).chr
-    until square == end_sq
+    until square == rook_square
       return false unless square_empty?(square)
 
       square[0] = square[0].ord.public_send(add_or_substract, 1).chr
@@ -49,16 +49,16 @@ module SpecialMoves
     true
   end
 
-  def king_will_be_in_check_during_castling?(start_square, end_square, player)
-    add_or_substract_file =  if king_moved_towards_rook_h?(start_square, end_square)
-                                :+
-                             else
-                                :-
-                             end
-    square = [start_square[0], start_square[1]]
+  def king_will_be_in_check_during_castling?(king_square, end_square, player)
+    add_or_substract_file = if king_moved_towards_rook_h?(king_square, end_square)
+                              :+
+                            else
+                              :-
+                            end
+    square = [king_square[0], king_square[1]]
     square[0] = square[0].ord.public_send(add_or_substract_file, 1).chr
     loop do
-      return true if move_puts_the_king_in_check?(start_square, square, player)
+      return true if move_puts_the_king_in_check?(king_square, square, player)
 
       break if square == end_square
       square[0] = square[0].ord.public_send(add_or_substract_file, 1).chr

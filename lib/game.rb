@@ -42,8 +42,6 @@ class ChessGame
     display_end_message
   end
 
-  private
-
   def start_new_game_or_continue_previous_session
     display_chess_board
     introduce_game
@@ -56,6 +54,31 @@ class ChessGame
     end
     complete_introduction
   end
+
+  def checkmate?
+    king_is_in_checkmate?(@player1) || king_is_in_checkmate?(@player2)
+  end
+
+  def draw?
+    insufficient_material_draw? || stalemate?
+  end
+
+  def player_turn(player)
+    next_move = if @bot_activated && player == @player2
+                  random_legal_move
+                else
+                  get_next_move(player)
+                end
+    return safely_exit_game if player_exits_game?(next_move)
+
+    return save_and_continue_game(player) if player_saves_game?(next_move)
+
+    make_move(next_move, player)
+    @most_recent_move = next_move
+    display_chess_board
+  end
+
+  private
 
   def set_up_players
     ask_about_opponent
@@ -74,10 +97,6 @@ class ChessGame
     opponent_answer
   end
 
-  def checkmate?
-    king_is_in_checkmate?(@player1) || king_is_in_checkmate?(@player2)
-  end
-
   def king_is_in_checkmate?(player)
     king_is_in_check?(player) && player_has_no_legal_moves?(player)
   end
@@ -92,11 +111,6 @@ class ChessGame
         return false if legal_move?(square, end_square, player)
       end
     end
-  end
-
-  def draw?
-    insufficient_material_draw?
-    stalemate?
   end
 
   def insufficient_material_draw?
@@ -123,21 +137,6 @@ class ChessGame
 
   def player_not_in_check_and_has_no_legal_moves?(player)
     !king_is_in_check?(player) && player_has_no_legal_moves?(player)
-  end
-
-  def player_turn(player)
-    next_move = if @bot_activated && player == @player2
-                  random_legal_move
-                else
-                  get_next_move(player)
-                end
-    return safely_exit_game if player_exits_game?(next_move)
-
-    return save_and_continue_game(player) if player_saves_game?(next_move)
-
-    make_move(next_move, player)
-    @most_recent_move = next_move
-    display_chess_board
   end
 
   def get_next_move(player)
@@ -339,25 +338,5 @@ class ChessGame
     update_board_for_display(end_square, end_square, new_unicode_piece)
   end
 end
-chess = ChessGame.new
-chess.play_game
-# player1 = chess.instance_variable_get(:@player1)
-# player2 = chess.instance_variable_get(:@player2)
-# chess.make_move('e2e4', player1)
-# chess.make_move('f7f5', player2)
-# chess.make_move('e4f5', player1)
-# chess.make_move('e7e6', player2)
-# chess.make_move('b2b4', player1)
-# chess.player_turn(player1)
-# chess.player_turn(player2)
-# p chess.castling_move?(['e', 1], ['g', 1], player1)
-# p player2.player_pieces
-# p chess.move_puts_the_king_in_check?(['e', 2], ['e', 3], player1)
-# p chess.legal_move?(['a', 2], ['a', 4], player1)
-# p chess.read_piece_name(['b',1])
-# p chess.king_is_in_check?(player1)
-# p chess.king_is_in_check?(player2)
-# p chess.promote_pawn(['g', 1], player2)
-# p player2.player_pieces
-# p chess.instance_variable_get(:@board)
-# puts chess.instance_variable_get(:@board_for_display)
+# chess = ChessGame.new
+# chess.play_game
