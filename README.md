@@ -17,3 +17,12 @@ The game should be properly constrained – it should prevent players from makin
 5.Have fun! Check out the unicode characters for a little spice for your gameboard.
 
 6.(Optional extension) Build a very simple AI computer player (perhaps who does a random legal move)
+
+
+If I was to improve the project in the future, I would make these changes:
+*** Improve speed of the program and preserve more memory:
+a) Use symbols instead of strings wherever they can be replaced.
+b) Use  .freeze  for strings, hashes & arrays that don't change during the game.
+*** Tidy up inside the lib/ directory: Put all files with classes for the chess pieces in one folder (pieces/).
+*** Improve the game against the computer experience: Implement the  sleep  method to make the computer make a move in a more realistic - slower - way.
+*** Make code more elegant: Use  .dup  instead of copying square coordinates in a more complicated way.
